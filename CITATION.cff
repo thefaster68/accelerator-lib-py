@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: accelerator-lib
+message: "If you are willing to use this code: please cite me <3:"
+type: software
+authors:
+  - family-names: Mincarini
+    given-names: Mattia
+version: 0.1.0
+date-released: 2025-10-13
+license: MIT
+repository-code: https://github.com/thefaster68/accelerator-lib-py
+keywords:
+  - accelerator physics
+  - computational physics
+  - particle tracking
+preferred-citation:
+  type: article
+  title: "accelerator-lib: a minimal particle accelerator simulation toolkit"
+  authors:
+    - family-names: Mincarini
+      given-names: Mattia
+  year: 2025
+  journal: "Preprint"
