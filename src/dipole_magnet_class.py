@@ -5,11 +5,11 @@ def _unit(v):
     v = np.asarray(v, float)
     n = np.linalg.norm(v)
     if n == 0.0:
-        raise ValueError("Direzione nulla")
+        raise ValueError("Null direction")
     return v / n
 
 def _frame(axis):
-    """Restituisce un terna ortonormale (u1, u2, n_hat) con n_hat || axis."""
+    """Returns an orthonormal triad (u1, u2, n_hat) with n_hat parallel to axis."""
     n_hat = _unit(axis)
     tmp = np.array([1.0, 0.0, 0.0]) if abs(n_hat[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
     u1 = _unit(np.cross(n_hat, tmp))   # perpendicolare a n_hat e tmp
@@ -24,14 +24,15 @@ def _gradient_from_focal(self, Q: float, m: float, v0: np.ndarray):
 
 class Dipole_mag:
     """
-    Quadrupolo magnetico ideale (campo lineare nel piano trasverso).
-    - R: raggio dell’apertura (m)
-    - L: lunghezza efficace (m)
-    - pos: centro (m)
-    - axis: direzione dell’asse magnete
-    - g: gradiente [T/m]; segno = polarità (F/D)
-    - roll: rotazione attorno all’asse (rad). roll=0 -> 'normale', roll=pi/4 -> 'skew'
+    Ideal magnetic dipole (linear field in the transverse plane).
+    - R: aperture radius (m)
+    - L: effective length (m)
+    - pos: center (m)
+    - axis: magnet axis direction
+    - g: gradient [T/m]; sign = polarity (F/D)
+    - roll: rotation about the axis (rad). roll=0 -> 'normal', roll=pi/4 -> 'skew'
     """
+
     def __init__(self, intensity, R, L, pos, axis, roll=0.0):
         self.intensity = intensity
         self.R   = float(R)
@@ -64,8 +65,9 @@ class Dipole_mag:
 
     def magnetic_field(self, x: np.ndarray, t: float = 0.0, polarity: int = +1) -> np.ndarray:
         """
-        Ritorna B(x) in Tesla. polarity=+1/-1 inverte F<->D.
+        Returns B(x) in Tesla. polarity = +1 / -1 swaps F <-> D.
         """
+
         xi, eta, zeta = self._local_coords(x)
         if not self._inside(xi, eta, zeta):
             return np.zeros(3)

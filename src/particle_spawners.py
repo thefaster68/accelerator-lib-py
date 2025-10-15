@@ -8,7 +8,7 @@ __all__ = ["particle_grid_spawner"]
 
 def _unit(v: np.ndarray) -> np.ndarray:
     """
-    Ritorna la norma di un vettore v + controllo sel v = 0
+    Returns the norm of a vector v, with a check in case v = 0.
     """
     v = np.asarray(v, dtype=float)
     n = np.linalg.norm(v)
@@ -19,8 +19,8 @@ def _unit(v: np.ndarray) -> np.ndarray:
 
 def _frame_from_axis(axis: np.ndarray):
     """
-    Dato un asse (versore) restituisce una terna ortonormale (u, v, n)
-    con n parallelo all'asse e u, v nel piano trasverso.
+    Given an axis (unit vector), returns an orthonormal triad (u, v, n)
+    with n parallel to the axis and u, v lying in the transverse plane.
     """
     n = _unit(axis)
     a = np.array([1.0, 0.0, 0.0]) if abs(n[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
@@ -44,36 +44,35 @@ def particle_grid_spawner(
     start_index: int = 0,
 ):
     """
-    Popola 'particles' con una griglia n_rows × n_cols centrata in 'center' e
-    disposta nel piano trasverso ortogonale a 'beam_dir'.
-    La velocità media è allineata alla direzione del fascio.
-
-    Parametri
-    ---------
+    Fills 'particles' with an n_rows × n_cols grid centered at 'center' and
+    placed in the transverse plane orthogonal to 'beam_dir'.
+    The mean velocity is aligned with the beam direction.
+    Parameters
+    ----------
     particles : list
-        Lista da riempire con oggetti prt.Particle().
+        List to be filled with prt.Particle() objects.
     n_rows, n_cols : int
-        Numero di righe e colonne della griglia trasversa.
+        Number of rows and columns of the transverse grid.
     dx, dy : float
-        Passi lungo i due versori trasversi (metri). La griglia è centrata.
+        Steps along the two transverse unit vectors (meters). The grid is centered.
     q, mass : float
-        Carica e massa delle particelle.
+        Charge and mass of the particles.
     v0 : float | array-like
-        Se float: modulo della velocità media, direzione presa da 'beam_dir'.
-        Se array-like shape (3,): velocità media completa; 'beam_dir' viene ignorato.
-    center : array-like shape (3,)
-        Centro della griglia in coordinate globali (metri).
-    beam_dir : array-like shape (3,)
-        Direzione del fascio; usata solo se v0 è scalare.
+        If float: magnitude of the mean velocity; direction taken from 'beam_dir'.
+        If array-like with shape (3,): full mean velocity; 'beam_dir' is ignored.
+    center : array-like with shape (3,)
+        Grid center in global coordinates (meters).
+    beam_dir : array-like with shape (3,)
+        Beam direction; used only if v0 is a scalar.
     jitter_rel : float
-        Rumore gaussiano relativo sulle componenti della velocità (default 1e-6).
+        Relative Gaussian noise on the velocity components (default 1e-6).
     start_index : int
-        Indice iniziale da assegnare alle particelle (incrementa automaticamente).
-
-    Ritorna
+        Starting index to assign to particles (auto-increments).
+    Returns
     -------
-    list : la stessa lista 'particles' riempita.
+    list : the same 'particles' list, now filled.
     """
+
     center = np.asarray(center, dtype=float)
     if np.ndim(v0) == 0:
         n = _unit(np.asarray(beam_dir, dtype=float))
@@ -118,26 +117,27 @@ def particle_circle_spawner(
     v0:float
 ):
     """
-    Popola particles con particelle disposte su una circonferenza orientata equidistanti tra loro
+    Populate 'particles' with particles placed equally spaced on an oriented circle.
 
     :param particles:
-        la lista di particelle da popolare
+        the list of particles to populate
     :param Np:
-        il numero di particelle da disporre sulla circonferenza
+        the number of particles to place on the circle
     :param R:
-        il raggio della circonferenza
+        the radius of the circle
     :param center:
-        il centro della circonferenza
+        the center of the circle
     :param axis:
-        l'asse di propagazione delle particelle
+        the propagation axis of the particles
     :param q:
-        la carica delle particelle
+        the charge of the particles
     :param mass:
-        la massa delle particelle
+        the mass of the particles
     :param v0:
-        il modulo della velocità delle particelle
-    :return: la lista di particelle popolata
+        the speed (magnitude of velocity) of the particles
+    :return: the populated list of particles
     """
+
 
     t_i = np.linspace(0, 2*np.pi * (1 - 1/Np), Np)
     u, v, n = _frame_from_axis(axis)

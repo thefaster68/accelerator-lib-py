@@ -4,9 +4,10 @@ import phisics_sim.src.physics as phy  # deve definire epsilon_0 e c
 # ---------- 1) Storia temporale ----------
 class HistoryBuffer:
     """
-    Buffer circolare di lunghezza 'hist_len' con campionamento fisso dt.
-    Conserva t, pos(N,3), vel(N,3).
+    Circular buffer of length 'hist_len' with fixed sampling interval dt.
+    Stores t, pos(N,3), vel(N,3).
     """
+
     def __init__(self, N: int, hist_len: int, dt: float):
         self.N = N
         self.hist_len = hist_len
@@ -27,14 +28,14 @@ class HistoryBuffer:
         return self.head >= 0 and not np.isnan(self.t[self.head])
 
     def _unroll_indices(self):
-        """Restituisce l'ordine temporale crescente degli indici del buffer."""
+        """Returns the buffer indices in increasing chronological order."""
         if self.head < 0:
             return np.array([], int)
         idx = np.arange(self.hist_len, dtype=int)
         return np.concatenate([idx[self.head+1:], idx[:self.head+1]])
 
     def get_arrays_unrolled(self, j: int):
-        """Ritorna (times, pos_j, vel_j) in ordine temporale crescente."""
+        """Returns (times, pos_j, vel_j) in increasing chronological order."""
         order = self._unroll_indices()
         times = self.t[order]
         mask = ~np.isnan(times)
@@ -46,9 +47,10 @@ class HistoryBuffer:
 # ---------- 2) Tempo ritardato via bisezione + interpolazione lineare ----------
 def _interp_state(times: np.ndarray, pos_j: np.ndarray, vel_j: np.ndarray, k: int, s: float):
     """
-    Interpola tra campioni k (tau_k) e k+1 (tau_{k+1}) con parametro s in [0,1].
-    Ritorna (r_j(τ), v_j(τ), a_j(τ) approx) con accelerazione costante sul segmento.
+    Interpolates between samples k (tau_k) and k+1 (tau_{k+1}) with parameter s in [0,1].
+    Returns (r_j(τ), v_j(τ), a_j(τ) approx) assuming constant acceleration along the segment.
     """
+
     r0, r1 = pos_j[k], pos_j[k+1]
     v0, v1 = vel_j[k], vel_j[k+1]
     tau0, tau1 = times[k], times[k+1]
@@ -62,10 +64,11 @@ def _interp_state(times: np.ndarray, pos_j: np.ndarray, vel_j: np.ndarray, k: in
 
 def _find_retarded_time_for_pair(ri_t, t, times, pos_j, c):
     """
-    Bracketing dell'ultima radice f(τ)=t-τ-||ri(t)-rj(τ)||/c con f monotona decrescente.
-    Cerca k tale che f[k] >= 0 e f[k+1] <= 0, poi fa bisezione su s in [0,1].
-    Restituisce (k, s) oppure None se la storia non copre la radice.
+    Bracketing of the last root of f(τ) = t - τ - ||ri(t) - rj(τ)|| / c, with f monotonically decreasing.
+    Searches for k such that f[k] >= 0 and f[k+1] <= 0, then performs bisection on s in [0,1].
+    Returns (k, s) or None if the history does not cover the root.
     """
+
     if len(times) < 2:
         return None
 
@@ -98,9 +101,10 @@ def _find_retarded_time_for_pair(ri_t, t, times, pos_j, c):
 # ---------- 3) Campi LW e forza totale ----------
 def _lw_fields_at_i_from_j(ri_t, t, times, pos_j, vel_j, qi, qj, vi_t, eps_r, kappa_floor=1e-8):
     """
-    Calcola E_j(ri,t) e B_j(ri,t) via Liénard–Wiechert (interp. lineare).
-    Restituisce (E,B) oppure (None,None) se non si trova il tempo ritardato.
+    Computes E_j(ri, t) and B_j(ri, t) via Liénard–Wiechert potentials (linear interpolation).
+    Returns (E, B) or (None, None) if the retarded time cannot be found.
     """
+
     c = phy.c
     eps0 = phy.epsilon_0
     k_pref = 1.0 / (4.0 * np.pi * eps0 * eps_r)
@@ -151,10 +155,12 @@ def forces_LW_pairwise(
     R_max: float | None = None,  # opzionale cutoff "pratico" (sconsigliato per accuratezza radiativa)
 ) -> np.ndarray:
     """
-    Forze totali sui N corpi con campi Liénard–Wiechert (retardati) + Lorentz.
-    Complessità O(N^2) (senza cutoff). Non applica azione-reazione.
+    Total forces on N bodies using Liénard–Wiechert (retarded) + Lorentz fields.
+    Complexity: O(N^2) (without cutoff). Action–reaction is not enforced.
     """
-    assert hist.valid(), "HistoryBuffer vuoto: fai almeno una push() per inizializzare."
+
+    assert hist.valid(), "Empty HistoryBuffer: perform at least one push() to initialize."
+
 
     N = pos.shape[0]
     F = np.zeros_like(pos)
@@ -201,10 +207,11 @@ def _find_retarded_state_for_pair(times: np.ndarray,
                                   t_now: float,
                                   c: float) -> tuple[float, np.ndarray, np.ndarray, np.ndarray] | None:
     """
-    Trova τ in [t_k, t_{k+1}] s.t. f(τ)=t_now-τ - |r_i - r_j(τ)|/c = 0
-    usando bisezione su s in [0,1] con interpolazione lineare tra k e k+1.
-    Ritorna (tau, r_tau, v_tau, a_tau) oppure None se non esiste bracket.
+    Find τ in [t_k, t_{k+1}] such that f(τ) = t_now − τ − |r_i − r_j(τ)|/c = 0
+    using bisection on s ∈ [0,1] with linear interpolation between k and k+1.
+    Returns (tau, r_tau, v_tau, a_tau) or None if no bracket exists.
     """
+
     # usa SOLO storia <= t_now
     mask = times <= t_now
     times = times[mask]; pos_j = pos_j[mask]; vel_j = vel_j[mask]
@@ -259,8 +266,9 @@ def _lw_EB_from_source(qj: float,
                        kappa_floor: float = 1e-6,
                        R_floor: float = 1e-12) -> tuple[np.ndarray, np.ndarray]:
     """
-    Campi LW di j su i al tempo t (già risolto τ e stato ritardato).
+    LW fields from particle j on particle i at time t (retarded state already resolved).
     """
+
     R_vec = r_i - r_tau
     R = float(np.linalg.norm(R_vec))
     if R < R_floor:
@@ -294,8 +302,8 @@ def fields_LW_pairwise(t_now: float,
                        kappa_floor: float = 1e-6,
                        R_floor: float = 1e-12) -> tuple[np.ndarray, np.ndarray]:
     """
-    Ritorna (E_pp, B_pp) con SOLO contributi particle-particle ritardati (LW).
-    E_pp, B_pp: array (N,3).
+    Returns (E_pp, B_pp) with ONLY retarded particle–particle (LW) contributions.
+    E_pp, B_pp: arrays of shape (N, 3).
     """
     N = pos_now.shape[0]
     E_pp = np.zeros((N, 3), dtype=float)

@@ -4,14 +4,14 @@ import phisics_sim.src.physics as phy
 
 class Capacitor:
     """
-    Condensatore planare rettangolare con campo (ideale) uniforme all'interno.
-    Opzionalmente, i bordi lungo la normale e quelli laterali possono essere
-    smussati con una finestra tanh per evitare discontinuità numeriche.
+    Rectangular planar capacitor with (ideal) uniform field inside.
+    Optionally, the edges along the normal and the lateral sides can be
+    smoothed using a tanh window to avoid numerical discontinuities.
 
-    Convenzioni:
-    - n_hat punta dalla piastra “-” verso la piastra “+”.
-      All'interno del gap: E = (sigma / (ε0 εr)) * n_hat.
-    - Volume attivo: spessore d lungo n_hat, base lungo l_hat, height lungo m_hat.
+    Conventions:
+    - n_hat points from the “–” plate toward the “+” plate.
+      Inside the gap: E = (sigma / (ε0 εr)) * n_hat.
+    - Active volume: thickness d along n_hat, base along l_hat, height along m_hat.
     """
     sigma: float = 0.0               # densità di carica superficiale [C/m^2]
     d:     float = 0.1               # spessore del gap [m]
@@ -54,7 +54,7 @@ class Capacitor:
         self._m_hat = m_hat
 
     def _coords_locali(self, x: np.ndarray):
-        """Coordinate locali (s_n, s_l, s_m) rispetto al centro self.pos."""
+        """Local coordinates (s_n, s_l, s_m) with respect to the center self.pos."""
         x_rel = np.asarray(x, dtype=float) - self.pos
         s_n = float(np.dot(self.n_hat, x_rel))
         s_l = float(np.dot(self._l_hat, x_rel))
@@ -65,9 +65,10 @@ class Capacitor:
     @staticmethod
     def _window_tanh(s: float, half_width: float, delta: float) -> float:
         """
-        Finestra 1D liscia: ~1 per |s| < half_width, ~0 fuori.
-        delta controlla la rapidità della transizione (delta -> 0 => gradino).
+        Smooth 1D window: ~1 for |s| < half_width, ~0 outside.
+        delta controls the sharpness of the transition (delta -> 0 => step function).
         """
+
         if delta <= 0.0:
             return 1.0 if abs(s) <= half_width else 0.0
         return 0.5 * (np.tanh((s + half_width) / delta) - np.tanh((s - half_width) / delta))
@@ -75,9 +76,10 @@ class Capacitor:
     # ---------------------- API esistente ----------------------
     def phi_gap_rf(self, x: np.ndarray, t: float) -> float:
         """
-        Potenziale 'ideale' del gap (solo lungo n_hat), con saturazione lineare fuori.
-        Manteniamo per retro-compatibilità; con smoothing attivo non usiamo il gradiente numerico.
+        'Ideal' potential of the gap (only along n_hat), with linear saturation outside.
+        Kept for backward compatibility; when smoothing is active, the numerical gradient is not used.
         """
+
         ndotx = float(np.dot(self.n_hat, x - self.pos))
         pref = -(self.sigma / (phy.epsilon_0 * self.epsilon_r))
         if self.in_capacitor(x):
@@ -86,7 +88,6 @@ class Capacitor:
             return pref * (0.5 * self.d) * np.sign(ndotx)
 
     def in_capacitor(self, x: np.ndarray) -> bool:
-        """Test 'duro' del vecchio comportamento (senza smoothing)."""
         s_n, s_l, s_m = self._coords_locali(x)
         return (abs(s_n) <= 0.5 * self.d
                 and abs(s_l) <= 0.5 * self.base
@@ -94,11 +95,12 @@ class Capacitor:
 
     def electric_field(self, x: np.ndarray, t: float) -> np.ndarray:
         """
-        Campo elettrico nel gap.
-        - Se edge_delta == lateral_delta == 0.0: comportamento precedente (gradino).
-          E = E0 * n_hat dentro, 0 fuori.
-        - Altrimenti: E = E0 * w_n(s_n) * w_l(s_l) * w_m(s_m) * n_hat  (finestre tanh).
+        Electric field inside the gap.
+        - If edge_delta == lateral_delta == 0.0: previous (step-like) behavior.
+          E = E0 * n_hat inside, 0 outside.
+        - Otherwise: E = E0 * w_n(s_n) * w_l(s_l) * w_m(s_m) * n_hat  (tanh windows).
         """
+
         E0 = (self.sigma / (phy.epsilon_0 * self.epsilon_r))
         s_n, s_l, s_m = self._coords_locali(x)
 

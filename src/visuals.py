@@ -4,7 +4,7 @@ import numpy as np
 
 
 def _draw_region_box(ax, x0, x1, y_extent, z_extent, color='C1', alpha=0.08):
-    """Box trasparente per evidenziare regioni (condensatore, quadrupolo)."""
+    """Transparent box to see capacitors, magnets and rf sections"""
     X = [x0, x1]
     Y = [-y_extent, +y_extent]
     Z = [-z_extent, +z_extent]
@@ -20,7 +20,7 @@ def _draw_region_box(ax, x0, x1, y_extent, z_extent, color='C1', alpha=0.08):
 
 
 def plot_proiezioni(POS: np.ndarray, cap=None, quad=None, title_suffix="", Np_expected=None, steps_expected=None):
-    """POS shape attesa: (Np, steps, 3). Plotta x–y, x–z, y–z + bande regioni."""
+    """Expected POS shape: (Np, steps, 3).. Plots x-y, x-z, y-z + region boxes."""
     assert POS.ndim == 3 and POS.shape[2] == 3, f"POS shape inattesa: {POS.shape}"
     Np, steps, _ = POS.shape
     # Sanity opzionale
@@ -62,8 +62,8 @@ def plot_proiezioni(POS: np.ndarray, cap=None, quad=None, title_suffix="", Np_ex
 
 
 
-def plot_3d(POS: np.ndarray, cap=None, quad=None, title="Traiettorie 3D", Np_expected=None, steps_expected=None):
-    """Plot 3D con box trasparente su regioni utili."""
+def plot_3d(POS: np.ndarray, cap=None, quad=None, title="3D Trajectories", Np_expected=None, steps_expected=None):
+    """3D plot with transparent boxes."""
     assert POS.ndim == 3 and POS.shape[2] == 3, f"POS shape inattesa: {POS.shape}"
     Np, steps, _ = POS.shape
     yE = np.nanmax(np.abs(POS[:, :, 1]))*1.1 + 1e-6
@@ -91,11 +91,8 @@ def plot_3d(POS: np.ndarray, cap=None, quad=None, title="Traiettorie 3D", Np_exp
 def plot_speed_vs_position(vel_norm: np.ndarray, POS: np.ndarray, *,
                            axis: str = "x", labels=None,
                            x_cap=None, x_quad=None,
-                           title: str = r"||v|| vs posizione"):
-    """
-    Plotta ||v|| in funzione della coordinata scelta (x,y,z).
-    Se axis='x', ombreggia le regioni di condensatore/quadrupolo se fornite.
-    """
+                           title: str = r"||v|| vs position"):
+    """Plots ||v|| vs given axis (x, y, z)"""
     idx_map = {"x": 0, "y": 1, "z": 2}
     assert axis in idx_map, "axis deve essere 'x', 'y' oppure 'z'"
     ax_idx = idx_map[axis]
@@ -128,29 +125,29 @@ def plot_speed_vs_position(vel_norm: np.ndarray, POS: np.ndarray, *,
 def plot_speed_norms(vel_norm: np.ndarray, dt: float, labels=None,
                      show_c: bool = False, yscale: str = "linear", title: str = "Norme delle velocità"):
     """
-    Plotta v_i(t) per ogni particella i.
+    Plots v_i(t) for each particle i.
     Parameters
     ----------
     vel_norm : np.ndarray
-        Array di shape (Np, steps) con le norme delle velocità già calcolate.
+        Array with shape (Np, steps) containing the norms of velocities
     dt : float
         Time step [s].
     labels : list[str] | None
-        Etichette per le particelle (len == Np). Se None, usa "p0", "p1", ...
+        Label per particle (len == Np). If None, uses "p0", "p1", ...
     show_c : bool
-        Se True disegna una riga orizzontale a v = c.
+        If True draws a horizontal line at v = c.
     yscale : {"linear","log"}
-        Scala dell'asse y.
+        y-axis scale.
     title : str
-        Titolo del grafico.
+        Graph title.
     """
-    assert vel_norm.ndim == 2, f"atteso (Np, steps), ottenuto {vel_norm.shape}"
+    assert vel_norm.ndim == 2, f"expected (Np, steps), had {vel_norm.shape}"
     Np, steps = vel_norm.shape
 
     # Asse dei tempi con unità "furbe"
     t = np.arange(steps) * dt
     if steps == 0:
-        raise ValueError("vel_norm ha zero steps: nulla da plottare.")
+        raise ValueError("vel_norm has zero steps: nothing to plot.")
     t_end = t[-1] if steps > 1 else dt
 
     if t_end < 1e-9:
@@ -170,7 +167,7 @@ def plot_speed_norms(vel_norm: np.ndarray, dt: float, labels=None,
     if labels is None:
         labels = [f"p{i}" for i in range(Np)]
     else:
-        assert len(labels) == Np, "labels deve avere lunghezza Np"
+        assert len(labels) == Np, "labels has to be of len Np"
 
     plt.figure(figsize=(8.5, 4.8))
     for i in range(Np):
@@ -199,12 +196,12 @@ def _unit(v):
     v = np.asarray(v, float)
     n = np.linalg.norm(v)
     if n == 0.0:
-        raise ValueError("Direzione nulla")
+        raise ValueError("null direction")
     return v / n
 
 
 def _plane_frame(n_hat):
-    """Ritorna (u_hat, v_hat, n_hat) ortonormali dato n_hat."""
+    """Returns (u_hat, v_hat, n_hat) ortonormal given n_hat."""
     n_hat = _unit(n_hat)
     # vettore 'tmp' non parallelo a n_hat
     tmp = np.array([1.0, 0.0, 0.0]) if abs(n_hat[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
@@ -217,40 +214,40 @@ def _plane_frame(n_hat):
 def plane_crossings_density(POS, P0, n_hat, nbins=(80, 80), half_extent=(5e-3, 5e-3),
                             normalize=False, return_uv=False, vels=None, dt=None):
     """
-    Costruisce la mappa di densità su un piano tramite gli attraversamenti delle traiettorie.
+    Construct the density map on a plane given the trajectories.
 
     Parameters
     ----------
     POS : array (Np, steps, 3)
-        Traiettorie.
+        Trajectories.
     P0 : array-like (3,)
-        Un punto del piano.
+        Point on the plane.
     n_hat : array-like (3,)
-        Normale al piano (direzione).
+        Normale of the piano (direction).
     nbins : (nx, ny)
-        Numero di bin su u e v.
+        Number of bins on u and v.
     half_extent : (Ux, Vy)
-        Estensioni massime in metri su u e v (da -Ux a +Ux, -Vy a +Vy).
+        Maximum extent in meters on u and v (from -Ux to +Ux, -Vy to +Vy).
     normalize : bool
-        Se True, normalizza per area del bin (densità areale [counts/m^2]).
+        If True, normalize per bin area ([counts/m^2]).
     return_uv : bool
-        Se True, ritorna anche gli array u,v degli impatti (utile per analisi extra).
-    vels : array opzionale (steps, Np, 3) o (Np, steps, 3)
-        Se fornito, può essere usato per calcolare direzioni al crossing (non obbligatorio).
+        If True, returns aslo arrays u,v of "impacts".
+    vels : not needed array (steps, Np, 3) or (Np, steps, 3)
+        If given, it can be used to calculate directions at crossing (not needed)
     dt : float
-        Solo se vuoi derivare direzioni dagli spostamenti; non necessario per la densità.
+        Only if you want to derive dirs from POS (not needed).
 
     Returns
     -------
     H : 2D array (ny, nx)
-        Mappa di densità (o counts) già pronta per imshow.
+        Density map (of counts).
     extent : [umin, umax, vmin, vmax]
-        Extent da passare a imshow.
+        Extent for imshow.
     (u_hits, v_hits) : opzionale
-        Coordinate (u,v) degli impatti individuati.
+        Coordinates (u,v) from single impact.
     """
     POS = np.asarray(POS, float)
-    assert POS.ndim == 3 and POS.shape[2] == 3, f"POS atteso (Np, steps, 3), trovato {POS.shape}"
+    assert POS.ndim == 3 and POS.shape[2] == 3, f"Expected POS (Np, steps, 3), found {POS.shape}"
     Np, steps, _ = POS.shape
 
     P0 = np.asarray(P0, float)
@@ -318,7 +315,7 @@ def plane_crossings_density(POS, P0, n_hat, nbins=(80, 80), half_extent=(5e-3, 5
         return H, extent
 
 
-def plot_plane_density(H, extent, title="Densità su piano", cmap="viridis",
+def plot_plane_density(H, extent, title="Density on plane", cmap="viridis",
                        cbar_label="counts", aspect="equal"):
     # Converti extent da [m] a [mm]
     extent_mm = [1e3 * extent[0], 1e3 * extent[1],
