@@ -69,7 +69,7 @@ if __name__ == "__main__":
     print("Tempo di simulazione: ", t1 - t0, "\t Tempo fisico: ", dt * steps, "\t", "delta = ",
           (t1 - t0) / (dt * steps))
 
-    # ----------------- NUOVO: calcolo vettorializzato delle norme e plot -----------------
+    # ----------------- Calcolo vettorializzato delle norme e plot -----------------
     # vels: shape attesa (steps, Np, 3). Convertiamo e otteniamo (Np, steps).
     vels_arr = np.asarray(sim.vels)                             # (steps, Np, 3)
     if vels_arr.ndim != 3 or vels_arr.shape[2] != 3:
@@ -83,9 +83,9 @@ if __name__ == "__main__":
     vsl.plot_speed_norms(vel_norm, dt, labels=labels, show_c=False,
                      yscale="linear", title="Norme delle velocità — test quadrupolo")
 
-    # ----------------- Plot delle proiezioni (come prima) -----------------
+    # ----------------- Plot delle proiezioni -----------------
     vsl.plot_proiezioni(
-        sim.POS, x_quad=x_quad,
+        sim.POS, multipoles=multipoles,
         title_suffix="— dipolo",
         Np_expected=Np, steps_expected=steps
     )

@@ -22,7 +22,7 @@ def create_particle(index: int, q: float, m: float,
 
 
 
-# ====================== NUOVO: utility per v(x) ======================
+# ====================== utility per v(x) ======================
 def compute_vel_norm_matrix(POS: np.ndarray, dt: float, vels_arr: np.ndarray | None) -> np.ndarray:
     """
     Restituisce vel_norm con shape (Np, steps).
@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     print("Tempo di simulazione: ", t1-t0, "\t Tempo fisico: ", dt*steps, "\t", "delta = ", (t1-t0)/(dt*steps))
 
-    # ----------------- NUOVO: calcolo robusto delle norme e plot -----------------
+    # ----------------- Calcolo robusto delle norme e plot -----------------
     # Provo ad usare sim.vels se esiste (steps, Np, 3); se non esiste, uso differenze da POS.
     vels_arr = getattr(sim, "vels", None)  # può non esserci nella tua Simulation
     vel_norm = compute_vel_norm_matrix(sim.POS, dt, vels_arr)  # -> (Np, steps)
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     vsl.plot_speed_norms(vel_norm, dt, labels=labels, show_c=False,
                      yscale="linear", title="Norme delle velocità — test rf cavity")
 
-    # ----------------- NUOVO: ||v|| vs posizione -----------------
+    # ----------------- ||v|| vs posizione -----------------
     x_cap_span = (posix[0] - 0.5*d, posix[0] + 0.5*d)
     vsl.plot_speed_vs_position(
         vel_norm, sim.POS, axis="x", labels=labels,

@@ -43,7 +43,6 @@ def compute_vel_norm_matrix(POS: np.ndarray, dt: float, vels_arr: np.ndarray | N
     return np.linalg.norm(V, axis=2)  # (Np, steps)
 
 
-
 if __name__ == "__main__":
     # --- parametri simulazione ---
     dt = 1.0e-9  # ok per v~1e6 m/s e k moderati
