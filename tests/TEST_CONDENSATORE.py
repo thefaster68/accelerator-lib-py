@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 # --- tuoi moduli ---
-import physics as phy
-import particle_class as prt
-import capacitor_class as cap
-import simulation_class as sim
-import boris_push_class as Integrator
+import phisics_sim.src.physics as phy
+import phisics_sim.src.particle_class as prt
+import phisics_sim.src.capacitor_class as cap
+import phisics_sim.src.simulation_class as sim
+import phisics_sim.src.boris_push_class as Integrator
 
 
 def create_particle(index: int, q: float, m: float,
