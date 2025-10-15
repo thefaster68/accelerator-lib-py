@@ -70,10 +70,7 @@ if __name__ == "__main__":
                      yscale="linear", title="Norme delle velocità — test dipolo")
 
     # ----------------- Plot delle proiezioni (come prima) -----------------
-    vsl.plot_proiezioni(
-        sim.POS,
-        title_suffix="— dipolo",
-        Np_expected=Np, steps_expected=steps
-    )
+    vsl.plot_proiezioni(sim.POS,
+                        title_suffix="— test dipolo", Np_expected=Np, steps_expected=steps)
 
     vsl.plot_3d(POS=sim.POS, Np_expected=Np, steps_expected=steps)

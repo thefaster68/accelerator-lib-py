@@ -1,5 +1,5 @@
 import numpy as np
-import physics as phy
+import phisics_sim.src.physics as phy
 
 class Dipole:
     def __init__(self, pos:np.ndarray, moment: np.ndarray):
